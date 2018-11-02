@@ -3,6 +3,7 @@
 # imap2thehive.py - Poll a IMAP mailbox and create new cases/alerts in TheHive
 #
 # Author: Xavier Mertens <xavier@rootshell.be>
+#
 # Copyright: GPLv3 (http://gplv3.fsf.org)
 # Fell free to use the code, but please share the changes you've made
 #
@@ -59,8 +60,10 @@ config = {
     'imapFolder'         : '',
     'imapExpunge'        : False,
     'thehiveURL'         : '',
+    'thehiveAuthMethod'  : '',
     'thehiveUser'        : '',
     'thehivePassword'    : '',
+    'thehiveAPIKey'      : '',
     'thehiveObservables' : False,
     'thehiveWhitelists'  : None,
     'caseTLP'            : '',
@@ -268,7 +271,10 @@ def submitTheHive(message):
     log.info("Removed duplicate observables: %d -> %d" % (len(observables), len(new_observables)))
     observables = new_observables
 
-    api = TheHiveApi(config['thehiveURL'], config['thehiveUser'], config['thehivePassword'], {'http': '', 'https': ''})
+    if config['thehiveAuthMethod']=='APIKey':
+        api = TheHiveApi(config['thehiveURL'], config['thehiveAPIKey'], None, {'http': '', 'https': ''})
+    else:
+        api = TheHiveApi(config['thehiveURL'], config['thehiveUser'], config['thehivePassword'], {'http': '', 'https': ''})
 
     # Search for interesting keywords in subjectField:
     log.debug("Searching for %s in '%s'" % (config['alertKeywords'], subjectField))
@@ -445,7 +451,7 @@ def main():
 
     if not os.path.isfile(args.configFile):
         log.error('Configuration file %s is not readable.' % args.configFile)
-        sys.exit(1);
+
 
     try:
         c = configparser.ConfigParser()
@@ -476,8 +482,10 @@ def main():
 
     # TheHive Config
     config['thehiveURL']        = c.get('thehive', 'url')
+    config['thehiveAuthMethod'] = c.get('thehive', 'authMethod')
     config['thehiveUser']       = c.get('thehive', 'user')
     config['thehivePassword']   = c.get('thehive', 'password')
+    config['thehiveAPIKey']     = c.get('thehive', 'apiKey')
     if c.has_option('thehive', 'observables'):
         value = c.get('thehive', 'observables')
         if value == '1' or value == 'true' or value == 'yes':
